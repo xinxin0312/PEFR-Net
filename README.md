@@ -1,2 +1,2 @@
 # PEFR-Net
-Upon publication of our paper, we will make the code publicly available.
+The complete source code, including training and evaluation pipelines, will be released after publication.
