@@ -137,9 +137,7 @@ class CoarseGenerator(nn.Module):
         self.conv3 = gen_GatedConv(cnum * 2, cnum * 4, 3, 2, padding=1, rate=1, norm='in', activation='elu')  # 64
         self.conv4 = gen_GatedConv(cnum * 4, cnum * 8, 3, 2, padding=1, rate=1, norm='in', activation='elu')  # 32
 
-        #############
-        # 中间进行PDE
-        # PDE
+     
         self.dt = 1e-2
         self.id = FD3d(kernel_size=[cnum * 8, 5, 5], max_order=0, dx=1 / (32 * 2.5), constraint='moment',
                        boundary=boundary)
@@ -155,8 +153,7 @@ class CoarseGenerator(nn.Module):
         for k in sample:
             sample_torch[k] = torch.autograd.Variable(torch.tensor(sample[k]))
 
-        xy = torch.stack([sample_torch['x'], sample_torch['y']], dim=2).unsqueeze(0).repeat(batch_size, 1, 1, 1)  # 原PDE中 x or y:[b, mesh_size[0], mesh_size[1]]  xy:[b, mesh_size[0], mesh_size[1], 2]
-        # xy的扩展到batchsize
+        xy = torch.stack([sample_torch['x'], sample_torch['y']], dim=2).unsqueeze(0).repeat(batch_size, 1, 1, 1) 
         for i in range(N):
             fitter = nn.Parameter(torch.zeros(1))
             self.register_buffer('coe' + str(i), fitter)
@@ -251,7 +248,7 @@ class CoarseGenerator(nn.Module):
         # PDE
         idkernel = self.id.MomentBank.kernel()
         fdkernel = self.fd3d.MomentBank.kernel()
-        coe = []  # 把 N 个 filter 加进去
+        coe = []  
         for fitter in self.coes:
             # coe.append(fitter())
             coe.append(fitter.view(1, 1, 1, 1))
@@ -264,8 +261,7 @@ class CoarseGenerator(nn.Module):
             diff = coe * ufd
             u = uid + self.dt * self.symnet(diff)
         x_conv4 = u.view(x_conv4.size())
-        ##############
-        # 特征图 embedding
+    
         batch_size = fea_embedding.size(0)
         fea_style_W = self.FeaMapping(fea_embedding.view(batch_size, -1))
         channel = fea_style_W.size(1)
